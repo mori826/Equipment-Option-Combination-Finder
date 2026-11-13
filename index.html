@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equipment Option Combination Finder — designed by mórí</title>
+<style>
+:root{color-scheme:dark;--bg:#10131b;--panel:#1a2030;--line:#344158;--text:#edf2fb;--muted:#9eabc1;--accent:#8daeff;--good:#63d6a1;--bad:#ff8d91;--warn:#f5c96b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b2740 0,#10131b 55%);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:26px 14px 48px}
+main{max-width:1180px;margin:auto}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}
+h1{font-size:25px;margin:0 0 5px}.sub{color:var(--muted);margin:0}.pill{border:1px solid var(--line);border-radius:999px;padding:6px 11px;color:var(--muted);white-space:nowrap;font-size:12px}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:15px;align-items:start}.panel{background:linear-gradient(160deg,#1d2638,#171d2b);border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:0 12px 35px #0003;margin-bottom:15px}
+h2{font-size:17px;margin:0 0 12px}.hint{font-size:12px;color:var(--muted);margin:-5px 0 13px}
+.gear-head,.gear-row{display:grid;grid-template-columns:minmax(105px,1.1fr) repeat(3,minmax(0,1fr)) 34px;gap:7px;align-items:center}
+.gear-head{font-size:11px;color:var(--muted);text-align:center;padding:0 0 4px}.gear-row{margin:8px 0}
+input,select{width:100%;min-width:0;background:#111827;color:var(--text);border:1px solid #3a4962;border-radius:8px;padding:9px 8px;font-size:12px}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{border:1px solid var(--line);border-radius:9px;background:#2a3852;color:var(--text);padding:8px 11px;font-weight:600;cursor:pointer;font-size:12px}
+button:hover{filter:brightness(1.12)}button.primary{background:#7899ed;color:#10182b;border-color:#7899ed}button.danger{background:#492d3a;border-color:#704052}
+.icon-btn{padding:7px 8px;color:#ffb0b3}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
+.stat{background:#121a29;border:1px solid var(--line);border-radius:10px;padding:9px}.stat b{display:block;font-size:21px}.stat span{font-size:10px;color:var(--muted)}
+.status{padding:10px 12px;border-radius:9px;background:#121a29;margin-bottom:12px;font-size:12px}.status.good{border:1px solid #326e59;color:var(--good)}.status.bad{border:1px solid #78444b;color:#ffb0b3}.status.neutral{border:1px solid var(--line);color:var(--muted)}
+.list{display:grid;gap:7px}.item{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:#121a29;border:1px solid #2b374c;border-radius:8px;padding:7px 9px;font-size:12px}
+.count{font-variant-numeric:tabular-nums;color:#dce6f8}.delta{font-size:10px;font-weight:700;min-width:55px;text-align:right}.short{color:var(--warn)}.over{color:var(--bad)}.exact{color:var(--good)}
+.section-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin:13px 0 6px}
+.result-card{background:#121a29;border:1px solid #344158;border-radius:10px;padding:11px;margin:8px 0}
+.result-title{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:700;margin-bottom:7px}
+.gear-chip{display:inline-block;background:#26344b;border:1px solid #3a4962;border-radius:7px;padding:5px 7px;margin:3px 4px 3px 0;font-size:11px}
+.chip-options{display:block;color:#c4d2e8;font-weight:400;font-size:10px;margin-top:2px}
+.result-meta{font-size:11px;color:var(--muted);margin-top:7px}
+#exactResults{max-height:540px;overflow:auto;padding-right:3px}
+.target-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,150px);gap:10px;align-items:end;margin-bottom:12px}
+.target-toolbar label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+.target-head,.target-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 34px;gap:8px;align-items:center}
+.target-head{font-size:11px;color:var(--muted);padding:0 0 4px;text-align:center}.target-row{margin:7px 0}
+.target-row input[type=number]{text-align:center}.target-row .option-name{min-width:0}
+.target-note{font-size:11px;color:var(--muted);margin-top:9px}
+.credit{color:var(--accent);font-size:11px;letter-spacing:.04em;margin-top:6px}footer{color:var(--muted);font-size:10px;margin-top:12px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.top{display:block}.pill{display:inline-block;margin-top:9px}}
+@media(max-width:520px){body{padding:17px 9px}.panel{padding:12px}.gear-head,.gear-row{grid-template-columns:minmax(74px,.95fr) repeat(3,minmax(0,1fr)) 29px;gap:4px}input,select{padding:8px 3px;font-size:10px}.gear-head{font-size:9px}.icon-btn{padding:6px 5px}.summary{gap:5px}.stat b{font-size:18px}.target-head,.target-row{grid-template-columns:minmax(0,1fr) 72px 29px;gap:5px}.target-toolbar{grid-template-columns:minmax(0,1fr) 105px}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top">
+  <div><h1>Equipment Option Combination Finder</h1><p class="sub">Enter your equipment, customize the target combination, and find the closest matches.</p><div class="credit">designed by mórí</div></div>
+  <div class="pill">Custom target · 3 options per item</div>
+ </div>
+ <div class="layout">
+  <section>
+   <div class="panel">
+    <h2>Owned Equipment</h2>
+    <p class="hint">Enter each equipment name and its three options. Leave an option blank if it is unknown.</p>
+    <div class="gear-head"><span>Equipment Name</span><span>Option 1</span><span>Option 2</span><span>Option 3</span><span></span></div>
+    <div id="gears"></div>
+    <div class="actions">
+     <button class="primary" id="addGear" type="button">＋ Add Equipment</button>
+     <button id="sample" type="button">Add 6 Sample Items</button>
+     <button class="danger" id="clearAll" type="button">Clear All</button>
+    </div>
+   </div>
+   <div class="panel">
+    <h2>Target Combination Builder</h2>
+    <p class="hint">Set the number of equipment pieces, then add, rename, change, or remove any target option.</p>
+    <div class="target-toolbar">
+     <div><label for="targetPieces">Equipment pieces in the combination</label><input id="targetPieces" type="number" min="1" max="20" step="1" value="6"></div>
+     <button id="restoreTarget" type="button">Restore Default</button>
+    </div>
+    <div class="target-head"><span>Required Option</span><span>Target Count</span><span></span></div>
+    <div id="targetRules"></div>
+    <div class="actions"><button class="primary" id="addTarget" type="button">＋ Add Target Option</button></div>
+    <div id="targetSummary" class="status neutral" style="margin-top:12px;margin-bottom:0">Target option summary will appear here.</div>
+    <p class="target-note">White Hole is included as an available equipment skill. Its default target count is 0 to preserve the original setup; increase it to include White Hole in your desired combination. Any custom target option you add will also become available in the Owned Equipment menus.</p>
+   </div>
+   <div class="panel">
+    <h2>Inventory Overview</h2>
+    <div class="summary">
+     <div class="stat"><b id="filled">0</b><span>Options Entered</span></div>
+     <div class="stat"><b id="missing">18</b><span>Options Missing</span></div>
+     <div class="stat"><b id="excess">0</b><span>Options Over Target</span></div>
+    </div>
+    <div id="overall" class="status neutral">Your inventory summary will appear here once you enter equipment options.</div>
+    <div class="section-label">Missing Options</div><div class="list" id="shortages"></div>
+    <div class="section-label">Options Over Target</div><div class="list" id="excesses"></div>
+    <div class="section-label">Total Option Counts</div><div class="list" id="allcounts"></div>
+    <footer>This section counts options across all registered equipment. Combination results compare groups of the selected number of items against your editable target.</footer>
+   </div>
+  </section>
+  <aside>
+   <div class="panel">
+    <h2>Combination Search</h2>
+    <p class="hint">Searches every possible group of the selected number of different items from your inventory.</p>
+    <div id="searchStatus" class="status neutral">Add at least 6 items to start the automatic search.</div>
+    <div class="summary">
+     <div class="stat"><b id="comboCount">0</b><span>Exact Matches</span></div>
+     <div class="stat"><b id="testedCount">0</b><span>Combinations Tested</span></div>
+     <div class="stat"><b id="bestScore">—</b><span>Best Match Score</span></div>
+    </div>
+    <div class="section-label">Exact Matches (up to 100 shown)</div>
+    <div id="exactResults" class="list"><div class="result-card">Your search results will appear here.</div></div>
+   </div>
+   <div class="panel">
+    <h2>Closest Combination</h2>
+    <p class="hint">Shows the combination with the smallest difference from your target. A lower score means a closer match.</p>
+    <div id="closestResult" class="result-card">Add at least 6 items to find the closest combination.</div>
+   </div>
+  </aside>
+ </div>
+ <footer>Available options include Damage · Critical Damage · Attck/Matt · Registry · Warrior · Archer · Mage · Thief · Pirate · Leap · White Hole. Add any other option name in the Target Combination Builder.</footer>
+</main>
+<script>
+'use strict';
+
+const DEFAULT_RULES = [
+ {option:'Damage',count:3},
+ {option:'Critical Damage',count:3},
+ {option:'Attck/Matt',count:3},
+ {option:'Registry',count:3},
+ {option:'Warrior',count:1},
+ {option:'Archer',count:1},
+ {option:'Mage',count:1},
+ {option:'Thief',count:1},
+ {option:'Pirate',count:1},
+ {option:'Leap',count:1},
+ {option:'White Hole',count:0}
+];
+const SAMPLE_ITEMS = [
+ ['Equipment 1','Damage','Critical Damage','Attck/Matt'],
+ ['Equipment 2','Damage','Critical Damage','Attck/Matt'],
+ ['Equipment 3','Damage','Critical Damage','Attck/Matt'],
+ ['Equipment 4','Registry','Warrior','Archer'],
+ ['Equipment 5','Registry','Mage','Thief'],
+ ['Equipment 6','Registry','Pirate','Leap']
+];
+const MAX_PIECES = 20;
+const MAX_COMBINATIONS_TO_TEST = 1000000;
+const gearRoot = document.getElementById('gears');
+const targetRoot = document.getElementById('targetRules');
+let nextGearId = 1;
+let nextTargetId = 1;
+let customOptionNumber = 1;
+const optionCatalog = new Set([
+ 'Damage','Critical Damage','Attck/Matt','Registry',
+ 'Warrior','Archer','Mage','Thief','Pirate','Leap','White Hole'
+]);
+
+const esc = value => String(value).replace(/[&<>"']/g, character => ({
+ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[character]));
+
+function addOptionToCatalog(value) {
+ const option = String(value || '').trim();
+ if (!option || optionCatalog.has(option)) return;
+ optionCatalog.add(option);
+ refreshGearSelects();
+}
+
+function refreshGearSelects() {
+ gearRoot.querySelectorAll('.gear-row select').forEach(select => {
+  const selected = select.value;
+  select.replaceChildren(new Option('— Empty —',''));
+  [...optionCatalog].forEach(option => select.add(new Option(option,option)));
+  if (selected && !optionCatalog.has(selected)) select.add(new Option(selected,selected));
+  select.value = selected;
+ });
+}
+
+function addGear(name = '', values = ['','','']) {
+ const id = nextGearId++;
+ const row = document.createElement('div');
+ row.className = 'gear-row';
+ row.dataset.id = String(id);
+ const nameInput = document.createElement('input');
+ nameInput.placeholder = `Equipment ${id}`;
+ nameInput.value = name;
+ nameInput.setAttribute('aria-label','Equipment name');
+ nameInput.addEventListener('input',runSearch);
+ row.appendChild(nameInput);
+
+ values.forEach((value,index) => {
+  if (value) addOptionToCatalog(value);
+  const select = document.createElement('select');
+  select.setAttribute('aria-label',`Equipment option ${index+1}`);
+  select.add(new Option('— Empty —',''));
+  [...optionCatalog].forEach(option => select.add(new Option(option,option)));
+  select.value = value || '';
+  select.addEventListener('change',() => { updateInventory(); runSearch(); });
+  row.appendChild(select);
+ });
+
+ const remove = document.createElement('button');
+ remove.type = 'button';
+ remove.className = 'icon-btn';
+ remove.title = 'Remove this equipment';
+ remove.setAttribute('aria-label','Remove this equipment');
+ remove.textContent = '✕';
+ remove.addEventListener('click',() => { row.remove(); updateInventory(); runSearch(); });
+ row.appendChild(remove);
+ gearRoot.appendChild(row);
+ updateInventory();
+}
+
+function getGears() {
+ return [...gearRoot.querySelectorAll('.gear-row')].map((row,index) => ({
+  id: row.dataset.id,
+  name: row.querySelector('input').value.trim() || `Equipment ${index+1}`,
+  vals: [...row.querySelectorAll('select')].map(select => select.value)
+ }));
+}
+
+function getTarget() {
+ const target = Object.create(null);
+ targetRoot.querySelectorAll('.target-row').forEach(row => {
+  const name = row.querySelector('.option-name').value.trim();
+  const rawCount = Number(row.querySelector('input[type="number"]').value);
+  const count = Number.isFinite(rawCount) ? Math.max(0,Math.floor(rawCount)) : 0;
+  if (name) target[name] = (target[name] || 0) + count;
+ });
+ return target;
+}
+
+function getPieceCount() {
+ const input = document.getElementById('targetPieces');
+ const raw = Number(input.value);
+ if (!Number.isFinite(raw) || raw < 1) return 1;
+ return Math.max(1,Math.min(MAX_PIECES,Math.floor(raw)));
+}
+
+function allOptions(gears,target) {
+ const found = new Set(optionCatalog);
+ Object.keys(target).forEach(option => found.add(option));
+ gears.forEach(gear => gear.vals.forEach(option => { if (option) found.add(option); }));
+ return [...found];
+}
+
+function countsFor(gears,options) {
+ const counts = Object.fromEntries(options.map(option => [option,0]));
+ gears.forEach(gear => gear.vals.forEach(value => {
+  if (value) counts[value] = (counts[value] || 0) + 1;
+ }));
+ return counts;
+}
+
+function renderItem(option,counts,target) {
+ const required = target[option] || 0;
+ const current = counts[option] || 0;
+ const difference = current - required;
+ const statusClass = difference < 0 ? 'short' : difference > 0 ? 'over' : 'exact';
+ const statusText = difference < 0 ? `${-difference} missing` : difference > 0 ? `${difference} over` : 'Met';
+ return `<div class="item"><span>${esc(option)}</span><span class="count">${current} / ${required}</span><span class="delta ${statusClass}">${statusText}</span></div>`;
+}
+
+function updateTargetSummary(target,pieceCount) {
+ const requiredTotal = Object.values(target).reduce((sum,count) => sum + count,0);
+ const slotTotal = pieceCount * 3;
+ const summary = document.getElementById('targetSummary');
+ if (requiredTotal > slotTotal) {
+  summary.className = 'status bad';
+  summary.textContent = `Target requires ${requiredTotal} options, but ${pieceCount} equipment pieces provide only ${slotTotal} slots. An exact match is impossible until you lower the target counts or increase the number of pieces.`;
+ } else if (requiredTotal === slotTotal) {
+  summary.className = 'status good';
+  summary.textContent = `Target total: ${requiredTotal} options across ${slotTotal} available slots. The target fills all option slots.`;
+ } else {
+  summary.className = 'status neutral';
+  summary.textContent = `Target total: ${requiredTotal} options across ${slotTotal} available slots. ${slotTotal-requiredTotal} slot(s) are not assigned to a target option.`;
+ }
+}
+
+function updateInventory() {
+ const gears = getGears();
+ const target = getTarget();
+ const pieceCount = getPieceCount();
+ const options = allOptions(gears,target);
+ const counts = countsFor(gears,options);
+ const filled = Object.values(counts).reduce((sum,count) => sum + count,0);
+ const missing = options.reduce((sum,option) => sum + Math.max(0,(target[option] || 0) - (counts[option] || 0)),0);
+ const excess = options.reduce((sum,option) => sum + Math.max(0,(counts[option] || 0) - (target[option] || 0)),0);
+
+ document.getElementById('filled').textContent = filled.toLocaleString();
+ document.getElementById('missing').textContent = missing.toLocaleString();
+ document.getElementById('excess').textContent = excess.toLocaleString();
+ const overall = document.getElementById('overall');
+ overall.className = `status ${missing === 0 && excess === 0 ? 'good' : 'neutral'}`;
+ overall.textContent = `${filled} options entered across ${gears.length} items · ${missing} missing · ${excess} over target`;
+
+ const shortages = options.filter(option => (counts[option] || 0) < (target[option] || 0));
+ const overages = options.filter(option => (counts[option] || 0) > (target[option] || 0));
+ document.getElementById('shortages').innerHTML = shortages.length
+  ? shortages.map(option => renderItem(option,counts,target)).join('')
+  : '<div class="item"><span>No missing options</span><span></span><span class="delta exact">Done</span></div>';
+ document.getElementById('excesses').innerHTML = overages.length
+  ? overages.map(option => renderItem(option,counts,target)).join('')
+  : '<div class="item"><span>No options over target</span><span></span><span class="delta exact">OK</span></div>';
+ document.getElementById('allcounts').innerHTML = options.map(option => renderItem(option,counts,target)).join('');
+ updateTargetSummary(target,pieceCount);
+}
+
+function scoreCounts(counts,options,target) {
+ let missing = 0;
+ let excess = 0;
+ options.forEach(option => {
+  const difference = (counts[option] || 0) - (target[option] || 0);
+  if (difference < 0) missing += -difference;
+  else excess += difference;
+ });
+ return {missing,excess,score:missing+excess};
+}
+
+function gearCard(gear) {
+ const shownOptions = gear.vals.map(value => esc(value || '—')).join(' · ');
+ return `<span class="gear-chip">${esc(gear.name)}<span class="chip-options">${shownOptions}</span></span>`;
+}
+
+function resultCard(combo,counts,score,index,options,target) {
+ const differences = options.filter(option => (counts[option] || 0) !== (target[option] || 0));
+ const needed = options.filter(option => (counts[option] || 0) < (target[option] || 0)).map(option => {
+  const amount = (target[option] || 0) - (counts[option] || 0);
+  return `<div class="item"><span>${esc(option)}</span><span class="count">Need ${amount} more</span><span class="delta short">Missing</span></div>`;
+ }).join('');
+ const over = options.filter(option => (counts[option] || 0) > (target[option] || 0)).map(option => {
+  const amount = (counts[option] || 0) - (target[option] || 0);
+  return `<div class="item"><span>${esc(option)}</span><span class="count">${amount} over target</span><span class="delta over">Excess</span></div>`;
+ }).join('');
+ const neededSection = needed
+  ? `<div class="section-label">Additional Equipment Options Needed</div><div class="list">${needed}</div><div class="result-meta">Look for equipment with these options, or replace excess options in this combination.</div>`
+  : '<div class="result-meta" style="color:var(--good)">No additional target options needed.</div>';
+ const overSection = over ? `<div class="section-label">Options Over Target</div><div class="list">${over}</div>` : '';
+ const breakdown = differences.length ? `<div class="section-label">Full Option Breakdown</div><div class="list">${differences.map(option => renderItem(option,counts,target)).join('')}</div>` : '';
+ const title = index ? `Combination ${index}` : 'Recommended Combination';
+ return `<div class="result-card"><div class="result-title"><span>${title}</span><span class="delta ${score.score === 0 ? 'exact' : 'short'}">Score ${score.score}</span></div><div>${combo.map(gearCard).join('')}</div><div class="result-meta">${score.missing} missing · ${score.excess} over target</div>${neededSection}${overSection}${breakdown}</div>`;
+}
+
+function combinationCount(n,k,limit) {
+ if (k < 0 || k > n) return 0;
+ k = Math.min(k,n-k);
+ let result = 1;
+ for (let i=1;i<=k;i++) {
+  result = result * (n-k+i) / i;
+  if (result > limit) return limit + 1;
+ }
+ return Math.round(result);
+}
+
+function runSearch() {
+ const gears = getGears();
+ const target = getTarget();
+ const options = allOptions(gears,target);
+ const pieceCount = getPieceCount();
+ const exact = [];
+ const displayLimit = 100;
+ const status = document.getElementById('searchStatus');
+ document.getElementById('comboCount').textContent = '0';
+ document.getElementById('testedCount').textContent = '0';
+ document.getElementById('bestScore').textContent = '—';
+
+ if (gears.length < pieceCount) {
+  status.className = 'status neutral';
+  status.textContent = `You currently have ${gears.length} items. At least ${pieceCount} are required for this target.`;
+  document.getElementById('exactResults').innerHTML = `<div class="result-card">Please add at least ${pieceCount} items.</div>`;
+  document.getElementById('closestResult').textContent = `Add at least ${pieceCount} items to find the closest combination.`;
+  return;
+ }
+
+ const totalCombinations = combinationCount(gears.length,pieceCount,MAX_COMBINATIONS_TO_TEST);
+ if (totalCombinations > MAX_COMBINATIONS_TO_TEST) {
+  status.className = 'status bad';
+  status.textContent = `This search contains more than ${MAX_COMBINATIONS_TO_TEST.toLocaleString()} possible combinations. Remove some equipment or increase the number of selected pieces to narrow the search.`;
+  document.getElementById('exactResults').innerHTML = '<div class="result-card">Search was paused to prevent the page from becoming unresponsive. Adjust your inventory or target piece count and try again.</div>';
+  document.getElementById('closestResult').textContent = 'A closest match cannot be calculated until the search is within the supported size.';
+  return;
+ }
+
+ const counts = Object.fromEntries(options.map(option => [option,0]));
+ let tested = 0;
+ let exactCount = 0;
+ let best = null;
+ let bestScore = Infinity;
+ const chosen = [];
+
+ function visit(start,depth) {
+  if (depth === pieceCount) {
+   tested++;
+   const score = scoreCounts(counts,options,target);
+   if (score.score < bestScore) {
+    bestScore = score.score;
+    best = {combo:chosen.slice(),counts:{...counts},score};
+   }
+   if (score.score === 0) {
+    exactCount++;
+    if (exact.length < displayLimit) exact.push({combo:chosen.slice(),counts:{...counts},score});
+   }
+   return;
+  }
+
+  const needed = pieceCount - depth;
+  for (let i=start;i<=gears.length-needed;i++) {
+   const gear = gears[i];
+   chosen.push(gear);
+   gear.vals.forEach(value => { if (value) counts[value] = (counts[value] || 0) + 1; });
+   visit(i+1,depth+1);
+   gear.vals.forEach(value => { if (value) counts[value]--; });
+   chosen.pop();
+  }
+ }
+
+ visit(0,0);
+ document.getElementById('comboCount').textContent = exactCount.toLocaleString();
+ document.getElementById('testedCount').textContent = tested.toLocaleString();
+ document.getElementById('bestScore').textContent = Number.isFinite(bestScore) ? bestScore.toLocaleString() : '—';
+ status.className = `status ${exactCount ? 'good' : 'neutral'}`;
+ status.textContent = exactCount
+  ? `Found ${exactCount.toLocaleString()} exact matches. Showing up to ${displayLimit} below.`
+  : `No exact matches found among ${tested.toLocaleString()} combinations. The closest combination is shown below.`;
+ document.getElementById('exactResults').innerHTML = exact.length
+  ? exact.map((result,index) => resultCard(result.combo,result.counts,result.score,index+1,options,target)).join('')
+  : '<div class="result-card">No matching combinations found.</div>';
+ document.getElementById('closestResult').innerHTML = best
+  ? resultCard(best.combo,best.counts,best.score,0,options,target)
+  : 'No combinations available to search.';
+}
+
+function refreshAll() {
+ updateInventory();
+ runSearch();
+}
+
+function addTargetRule(option = 'Custom Option',count = 1) {
+ const row = document.createElement('div');
+ row.className = 'target-row';
+ row.dataset.id = String(nextTargetId++);
+ const name = document.createElement('input');
+ name.className = 'option-name';
+ name.type = 'text';
+ name.value = option;
+ name.setAttribute('aria-label','Target option name');
+ name.addEventListener('input',refreshAll);
+ name.addEventListener('change',() => { addOptionToCatalog(name.value); refreshAll(); });
+ const amount = document.createElement('input');
+ amount.type = 'number';
+ amount.min = '0';
+ amount.step = '1';
+ amount.value = String(count);
+ amount.setAttribute('aria-label','Target option count');
+ amount.addEventListener('input',refreshAll);
+ const remove = document.createElement('button');
+ remove.type = 'button';
+ remove.className = 'icon-btn';
+ remove.title = 'Remove target option';
+ remove.setAttribute('aria-label','Remove target option');
+ remove.textContent = '✕';
+ remove.addEventListener('click',() => { row.remove(); refreshAll(); });
+ row.append(name,amount,remove);
+ targetRoot.appendChild(row);
+}
+
+function setDefaultTarget() {
+ targetRoot.replaceChildren();
+ nextTargetId = 1;
+ customOptionNumber = 1;
+ document.getElementById('targetPieces').value = '6';
+ DEFAULT_RULES.forEach(rule => addTargetRule(rule.option,rule.count));
+ refreshAll();
+}
+
+document.getElementById('addGear').addEventListener('click',() => { addGear(); runSearch(); });
+document.getElementById('sample').addEventListener('click',() => { SAMPLE_ITEMS.forEach(item => addGear(item[0],item.slice(1))); runSearch(); });
+document.getElementById('clearAll').addEventListener('click',() => { gearRoot.replaceChildren(); nextGearId = 1; refreshAll(); });
+document.getElementById('addTarget').addEventListener('click',() => {
+ let name;
+ do { name = `Custom Option ${customOptionNumber++}`; }
+ while (optionCatalog.has(name) || Object.prototype.hasOwnProperty.call(getTarget(),name));
+ addTargetRule(name,1);
+ addOptionToCatalog(name);
+ refreshAll();
+});
+document.getElementById('restoreTarget').addEventListener('click',setDefaultTarget);
+document.getElementById('targetPieces').addEventListener('input',() => {
+ const input = document.getElementById('targetPieces');
+ if (input.value !== '') {
+  const value = Math.max(1,Math.min(MAX_PIECES,Math.floor(Number(input.value) || 1)));
+  input.value = String(value);
+ }
+ refreshAll();
+});
+document.getElementById('targetPieces').addEventListener('change',() => {
+ document.getElementById('targetPieces').value = String(getPieceCount());
+ refreshAll();
+});
+
+for (let i=0;i<6;i++) addGear(`Equipment ${i+1}`);
+setDefaultTarget();
+</script>
+</body>
+</html>
